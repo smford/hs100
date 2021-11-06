@@ -1,84 +1,142 @@
 package main
 
 import (
+	"bytes"
 	b64 "encoding/base64"
+	"encoding/binary"
 	"flag"
 	"fmt"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"log"
 	"net"
+	"os"
 )
 
+const applicationName string = "hs100-cli"
+const applicationVersion string = "v0.1"
+
 var (
-	myAction    string
+	// further commands listed here: https://github.com/softScheck/tplink-smartplug/blob/master/tplink-smarthome-commands.txt
 	commandList = map[string]string{
-		"off":    "AAAAKtDygfiL/5r31e+UtsWg1Iv5nPCR6LfEsNGlwOLYo4HyhueT9tTu3qPeow==",
-		"on":     "AAAAKtDygfiL/5r31e+UtsWg1Iv5nPCR6LfEsNGlwOLYo4HyhueT9tTu36Lfog==",
-		"status": "AAAAI9Dw0qHYq9+61/XPtJS20bTAn+yV5o/hh+jK8J7rh+vLtpbr",
+		"on":        `{"system":{"set_relay_state":{"state":1}}}`,
+		"off":       `{"system":{"set_relay_state":{"state":0}}}`,
+		"info":      `{"system":{"get_sysinfo":{}}}`,
+		"wifiscan":  `{"netif":{"get_scaninfo":{"refresh":1}}}`,
+		"getaction": `{"schedule":{"get_next_action":null}}`,
+		"getrules":  `{"schedule":{"get_rules":null}}`,
+		"getaway":   `{"anti_theft":{"get_rules":null}}`,
 	}
 )
 
 func init() {
 	flag.String("do", "on", "Some Description")
+	flag.Bool("debug", false, "Display debugging information")
+	flag.Bool("help", false, "Display help")
+	flag.Bool("version", false, "Display version information")
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
 	err := viper.BindPFlags(pflag.CommandLine)
+	checkErr(err)
 
-	if err != nil {
-		fmt.Println("Error in bindpflags")
+	if viper.GetBool("help") {
+		displayHelp()
+		os.Exit(0)
 	}
 
-	fmt.Printf("myaction=%s\n", commandList[viper.GetString("do")])
-
+	if viper.GetBool("version") {
+		fmt.Println(applicationName + " " + applicationVersion)
+		os.Exit(0)
+	}
 }
 
 func main() {
-
-	con, err := net.Dial("tcp", "192.168.10.127:9999")
-
-	checkErr(err)
-
-	defer con.Close()
-
-	msg := commandList[viper.GetString("do")]
-
-	Decoded, _ := b64.StdEncoding.DecodeString(msg)
-
-	//fmt.Printf("Decrypted=%s\n", decryptHS(Decoded))
-
-	_, err = con.Write([]byte(Decoded))
-
-	checkErr(err)
-
-	reply := make([]byte, 1024)
-
-	_, err = con.Read(reply)
-
-	checkErr(err)
-
-	fmt.Println(b64.StdEncoding.EncodeToString([]byte(reply)))
-	//fmt.Println(string(reply))
-
-	fmt.Printf("decryptHS=%s\n", decryptHS(reply))
+	ip := "192.168.10.127"
+	json := commandList[viper.GetString("do")]
+	data := encrypt(json)
+	reading, err := send(ip, data)
+	fmt.Println("send complete")
+	if err == nil {
+		fmt.Printf("Results=%s\n", decrypt(reading[4:]))
+	}
 }
 
+// checks errors
 func checkErr(err error) {
-
 	if err != nil {
-
 		log.Fatal(err)
 	}
 }
 
-func decryptHS(ciphertext []byte) string {
+// decrypts the return message
+func decrypt(ciphertext []byte) string {
 	n := len(ciphertext)
 	key := byte(0xAB)
 	var nextKey byte
-	for i := 4; i < n; i++ {
+	for i := 0; i < n; i++ {
 		nextKey = ciphertext[i]
 		ciphertext[i] = ciphertext[i] ^ key
 		key = nextKey
 	}
 	return string(ciphertext)
+}
+
+// encrypts a message to be sent to the device
+func encrypt(plaintext string) []byte {
+	n := len(plaintext)
+	buf := new(bytes.Buffer)
+	binary.Write(buf, binary.BigEndian, uint32(n))
+	ciphertext := []byte(buf.Bytes())
+
+	key := byte(0xAB)
+	payload := make([]byte, n)
+	for i := 0; i < n; i++ {
+		payload[i] = plaintext[i] ^ key
+		key = payload[i]
+	}
+
+	for i := 0; i < len(payload); i++ {
+		ciphertext = append(ciphertext, payload[i])
+	}
+
+	return ciphertext
+}
+
+// sends a message to the device
+func send(ip string, payload []byte) (data []byte, err error) {
+	conn, err := net.Dial("tcp", ip+":9999")
+	if err != nil {
+		fmt.Println("Cannot connnect to plug:", err)
+		data = nil
+		return
+	}
+	defer conn.Close()
+
+	_, err = conn.Write(payload)
+
+	reply := make([]byte, 1024)
+	_, err = conn.Read(reply)
+	if err != nil {
+		fmt.Println("Cannot read data from plug:", err)
+	}
+
+	// displays reply payload
+	if viper.GetBool("debug") {
+		fmt.Println(b64.StdEncoding.EncodeToString([]byte(reply)))
+	}
+
+	return reply, err
+}
+
+// displays help information
+func displayHelp() {
+	message := `
+      --config [file]       Configuration file: /path/to/file.yaml (default: "./config.yaml")
+      --debug               Display debug information
+      --displayconfig       Display configuration
+      --do <action>         on, off, info, wifiscan, getaction, getrules, getaway (default: "on")
+      --help                Display help
+      --version             Display version`
+	fmt.Println(applicationName + " " + applicationVersion)
+	fmt.Println(message)
 }
