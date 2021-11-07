@@ -20,12 +20,49 @@ import (
 const applicationName string = "hs100-cli"
 const applicationVersion string = "v0.4"
 
+type SystemInfo struct {
+	System struct {
+		GetSysinfo struct {
+			SwVer      string `json:"sw_ver"`
+			HwVer      string `json:"hw_ver"`
+			Type       string `json:"type"`
+			Model      string `json:"model"`
+			Mac        string `json:"mac"`
+			DevName    string `json:"dev_name"`
+			Alias      string `json:"alias"`
+			RelayState int    `json:"relay_state"`
+			OnTime     int    `json:"on_time"`
+			ActiveMode string `json:"active_mode"`
+			Feature    string `json:"feature"`
+			Updating   int    `json:"updating"`
+			IconHash   string `json:"icon_hash"`
+			Rssi       int    `json:"rssi"`
+			LedOff     int    `json:"led_off"`
+			LongitudeI int    `json:"longitude_i"`
+			LatitudeI  int    `json:"latitude_i"`
+			HwID       string `json:"hwId"`
+			FwID       string `json:"fwId"`
+			DeviceID   string `json:"deviceId"`
+			OemID      string `json:"oemId"`
+			NextAction struct {
+				Type    int    `json:"type"`
+				ID      string `json:"id"`
+				SchdSec int    `json:"schd_sec"`
+				Action  int    `json:"action"`
+			} `json:"next_action"`
+			NtcState int `json:"ntc_state"`
+			ErrCode  int `json:"err_code"`
+		} `json:"get_sysinfo"`
+	} `json:"system"`
+}
+
 var (
 	// further commands listed here: https://github.com/softScheck/tplink-smartplug/blob/master/tplink-smarthome-commands.txt
 	commandList = map[string]string{
 		"on":        `{"system":{"set_relay_state":{"state":1}}}`,
 		"off":       `{"system":{"set_relay_state":{"state":0}}}`,
 		"info":      `{"system":{"get_sysinfo":{}}}`,
+		"status":    `{"system":{"get_sysinfo":{}}}`, // same as info, just output is parsed differently
 		"wifiscan":  `{"netif":{"get_scaninfo":{"refresh":1}}}`,
 		"getaction": `{"schedule":{"get_next_action":null}}`,
 		"getrules":  `{"schedule":{"get_rules":null}}`,
@@ -35,7 +72,7 @@ var (
 
 func init() {
 	flag.String("config", "config.yaml", "Configuration file: /path/to/file.yaml, default = ./config.yaml")
-	flag.String("do", "on", "on, off, info, wifiscan, getaction, getrules, getaway (default: \"on\")")
+	flag.String("do", "on", "on, off, info, wifiscan, getaction, getrules, getaway, status (default: \"on\")")
 	flag.Bool("debug", false, "Display debugging information")
 	flag.Bool("displayconfig", false, "Display configuration")
 	flag.Bool("help", false, "Display help")
@@ -104,9 +141,23 @@ func main() {
 			log.Println("JSON parse error: ", error)
 		}
 
+		// print the entire json response if info, getaction, getrules, getaway, wificscan
 		if strings.EqualFold(viper.GetString("do"), "info") || strings.EqualFold(viper.GetString("do"), "getaction") || strings.EqualFold(viper.GetString("do"), "getrules") || strings.EqualFold(viper.GetString("do"), "getaway") || strings.EqualFold(viper.GetString("do"), "wifiscan") {
 			fmt.Printf("%s\n", string(prettyJSON.Bytes()))
 		}
+
+		// print status of a device (on or off)
+		if strings.EqualFold(viper.GetString("do"), "status") {
+			res := SystemInfo{}
+			json.Unmarshal([]byte(decryptedresponse), &res)
+			switch res.System.GetSysinfo.RelayState {
+			case 0:
+				fmt.Println("OFF")
+			case 1:
+				fmt.Println("ON")
+			}
+		}
+
 	}
 }
 
@@ -183,7 +234,7 @@ func displayHelp() {
       --config [file]       Configuration file: /path/to/file.yaml (default: "./config.yaml")
       --debug               Display debug information
       --displayconfig       Display configuration
-      --do <action>         on, off, info, wifiscan, getaction, getrules, getaway (default: "on")
+      --do <action>         on, off, info, wifiscan, getaction, getrules, getaway, status (default: "on")
       --help                Display help
       --version             Display version`
 	fmt.Println(applicationName + " " + applicationVersion)
