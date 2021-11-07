@@ -11,10 +11,12 @@ import (
 	"log"
 	"net"
 	"os"
+	"sort"
+	"strings"
 )
 
 const applicationName string = "hs100-cli"
-const applicationVersion string = "v0.1"
+const applicationVersion string = "v0.2"
 
 var (
 	// further commands listed here: https://github.com/softScheck/tplink-smartplug/blob/master/tplink-smarthome-commands.txt
@@ -32,6 +34,7 @@ var (
 func init() {
 	flag.String("do", "on", "Some Description")
 	flag.Bool("debug", false, "Display debugging information")
+	flag.Bool("displayconfig", false, "Display configuration")
 	flag.Bool("help", false, "Display help")
 	flag.Bool("version", false, "Display version information")
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
@@ -48,11 +51,16 @@ func init() {
 		fmt.Println(applicationName + " " + applicationVersion)
 		os.Exit(0)
 	}
+
+	if viper.GetBool("displayconfig") {
+		displayConfig()
+		os.Exit(0)
+	}
 }
 
 func main() {
 	ip := "192.168.10.127"
-	json := commandList[viper.GetString("do")]
+	json := commandList[strings.ToLower(viper.GetString("do"))]
 	data := encrypt(json)
 	reading, err := send(ip, data)
 	fmt.Println("send complete")
@@ -139,4 +147,16 @@ func displayHelp() {
       --version             Display version`
 	fmt.Println(applicationName + " " + applicationVersion)
 	fmt.Println(message)
+}
+
+func displayConfig() {
+	allmysettings := viper.AllSettings()
+	var keys []string
+	for k := range allmysettings {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		fmt.Println("CONFIG:", k, ":", allmysettings[k])
+	}
 }
