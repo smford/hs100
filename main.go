@@ -17,7 +17,7 @@ import (
 	"strings"
 )
 
-const applicationName string = "hs100-cli"
+const applicationName string = "tplink-hs1x-cli"
 const applicationVersion string = "v0.6"
 
 type SimpleResponse struct {
@@ -346,9 +346,11 @@ func displayHelp() {
 	message := `
       --config [file]       Configuration file: /path/to/file.yaml (default: "./config.yaml")
       --debug               Display debug information
+      --device [string]     Device to apply "do action" against
       --displayconfig       Display configuration
       --do <action>         on, off, info, wifiscan, getaction, getrules, getaway, status (default: "on")
       --help                Display help
+      --list                List devices
       --version             Display version`
 	fmt.Println(applicationName + " " + applicationVersion)
 	fmt.Println(message)

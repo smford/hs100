@@ -1,6 +1,6 @@
-### hs100-cli
+### tplink-hs1x-cli
 
-A simple app to control hs100 devices
+A simple app to control TPLink HS100 and HS110 devices
 
 ## Interesting Links
 - https://www.softscheck.com/en/reverse-engineering-tp-link-hs110/
