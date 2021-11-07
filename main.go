@@ -11,12 +11,13 @@ import (
 	"log"
 	"net"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 )
 
 const applicationName string = "hs100-cli"
-const applicationVersion string = "v0.2"
+const applicationVersion string = "v0.3"
 
 var (
 	// further commands listed here: https://github.com/softScheck/tplink-smartplug/blob/master/tplink-smarthome-commands.txt
@@ -32,6 +33,7 @@ var (
 )
 
 func init() {
+	flag.String("config", "config.yaml", "Configuration file: /path/to/file.yaml, default = ./config.yaml")
 	flag.String("do", "on", "Some Description")
 	flag.Bool("debug", false, "Display debugging information")
 	flag.Bool("displayconfig", false, "Display configuration")
@@ -52,14 +54,38 @@ func init() {
 		os.Exit(0)
 	}
 
+	configdir, configfile := filepath.Split(viper.GetString("config"))
+
+	// set default configuration directory to current directory
+	if configdir == "" {
+		configdir = "."
+	}
+
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(configdir)
+
+	config := strings.TrimSuffix(configfile, ".yaml")
+	config = strings.TrimSuffix(config, ".yml")
+
+	viper.SetConfigName(config)
+
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			log.Fatal("Config file not found")
+		} else {
+			log.Fatal("Config file was found but another error was discovered: ", err)
+		}
+	}
+
 	if viper.GetBool("displayconfig") {
 		displayConfig()
 		os.Exit(0)
 	}
+
 }
 
 func main() {
-	ip := "192.168.10.127"
+	ip := "192.168.10.44"
 	json := commandList[strings.ToLower(viper.GetString("do"))]
 	data := encrypt(json)
 	reading, err := send(ip, data)
