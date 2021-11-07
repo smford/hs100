@@ -18,7 +18,7 @@ import (
 )
 
 const applicationName string = "hs100-cli"
-const applicationVersion string = "v0.5"
+const applicationVersion string = "v0.6"
 
 type SystemInfo struct {
 	System struct {
@@ -130,6 +130,11 @@ func init() {
 		os.Exit(0)
 	}
 
+	if !isCommandValid(viper.GetString("do")) {
+		fmt.Printf("\"--do %s\" is an invalid action\n", strings.ToLower(viper.GetString("do")))
+		os.Exit(1)
+	}
+
 	if viper.GetBool("all") || (len(viper.GetString("device")) == 0) {
 		// if "--all" or if default is used, assume "all"
 		myDevice = "all"
@@ -158,34 +163,51 @@ func init() {
 
 func main() {
 
+	// map of ips to device names (aka a reverse of "devices" in config file)
+	allDevices := make(map[string]string)
+	for deviceName, ip := range viper.GetStringMap("devices") {
+		allDevices[ip.(string)] = deviceName
+	}
+
+	// list of ips to send commands to
 	ips := make([]string, 0)
 
 	// if all devices,
 	if strings.EqualFold(myDevice, "all") {
-		fmt.Println("all devices")
-		for _, v := range viper.GetStringMap("devices") {
-			ips = append(ips, v.(string))
+		//fmt.Println("all devices")
+		for _, ip := range viper.GetStringMap("devices") {
+			ips = append(ips, ip.(string))
 		}
 
 	} else {
-		fmt.Printf("just device = %s\n", viper.GetString("device"))
-		fmt.Printf("length = %d\n", len(viper.GetString("device")))
-
 		ips = append(ips, viper.GetStringMap("devices")[viper.GetString("device")].(string))
 	}
 
-	fmt.Println("ips to scan")
-	for _, ip := range ips {
-		fmt.Println(ip)
+	if len(ips) > 1 {
+		fmt.Println("Devices to control:")
+		for _, ip := range ips {
+			fmt.Printf("%s", allDevices[ip])
+			if viper.GetBool("debug") {
+				fmt.Printf(" %s", ip)
+			}
+			fmt.Printf("\n")
+		}
 	}
 
 	for _, ip := range ips {
 
-		//ip := "192.168.10.44"
+		if len(ips) > 1 {
+			fmt.Printf("\nDevice: %s\n==============\n", allDevices[ip])
+		}
+
 		jsonCmd := commandList[strings.ToLower(viper.GetString("do"))]
+
 		data := encrypt(jsonCmd)
+
+		if viper.GetBool("debug") {
+			fmt.Printf("Sending: %s\n", jsonCmd)
+		}
 		reading, err := send(ip, data)
-		fmt.Println("send complete")
 		if err == nil {
 
 			// strip out junk at end of result in preparation for json parsing
@@ -200,14 +222,20 @@ func main() {
 			}
 
 			// print the entire json response if info, getaction, getrules, getaway, wificscan
-			if strings.EqualFold(viper.GetString("do"), "info") || strings.EqualFold(viper.GetString("do"), "getaction") || strings.EqualFold(viper.GetString("do"), "getrules") || strings.EqualFold(viper.GetString("do"), "getaway") || strings.EqualFold(viper.GetString("do"), "wifiscan") {
-				fmt.Printf("%s\n", string(prettyJSON.Bytes()))
+			if viper.GetBool("debug") || strings.EqualFold(viper.GetString("do"), "info") || strings.EqualFold(viper.GetString("do"), "getaction") || strings.EqualFold(viper.GetString("do"), "getrules") || strings.EqualFold(viper.GetString("do"), "getaway") || strings.EqualFold(viper.GetString("do"), "wifiscan") {
+
+				fmt.Printf("Response: %s\n", string(prettyJSON.Bytes()))
 			}
 
 			// print status of a device (on or off)
 			if strings.EqualFold(viper.GetString("do"), "status") {
 				res := SystemInfo{}
 				json.Unmarshal([]byte(decryptedresponse), &res)
+
+				if len(ips) > 1 {
+					fmt.Printf("%s: ", allDevices[ip])
+				}
+
 				switch res.System.GetSysinfo.RelayState {
 				case 0:
 					fmt.Println("OFF")
@@ -281,6 +309,7 @@ func send(ip string, payload []byte) (data []byte, err error) {
 
 	// displays reply payload
 	if viper.GetBool("debug") {
+		fmt.Printf("Response base64: ")
 		fmt.Println(b64.StdEncoding.EncodeToString([]byte(reply)))
 	}
 
@@ -320,4 +349,13 @@ func displayDevices() {
 	} else {
 		fmt.Println("no devices found")
 	}
+}
+
+// checks if a command is valid
+func isCommandValid(command string) bool {
+	if _, ok := commandList[command]; ok {
+		return true
+	}
+
+	return false
 }
