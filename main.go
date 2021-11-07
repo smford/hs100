@@ -4,6 +4,7 @@ import (
 	"bytes"
 	b64 "encoding/base64"
 	"encoding/binary"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/spf13/pflag"
@@ -14,10 +15,11 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"unicode"
 )
 
 const applicationName string = "hs100-cli"
-const applicationVersion string = "v0.3"
+const applicationVersion string = "v0.4"
 
 var (
 	// further commands listed here: https://github.com/softScheck/tplink-smartplug/blob/master/tplink-smarthome-commands.txt
@@ -86,12 +88,39 @@ func init() {
 
 func main() {
 	ip := "192.168.10.44"
-	json := commandList[strings.ToLower(viper.GetString("do"))]
-	data := encrypt(json)
+	jsonCmd := commandList[strings.ToLower(viper.GetString("do"))]
+	data := encrypt(jsonCmd)
 	reading, err := send(ip, data)
 	fmt.Println("send complete")
 	if err == nil {
-		fmt.Printf("Results=%s\n", decrypt(reading[4:]))
+		whatwhat := decrypt(reading[4:])
+		//fmt.Printf("Results=%s\n", decrypt(reading[4:]))
+		//whatwhat = whatwhat + "\n"
+
+		if hasSymbol(whatwhat) {
+			fmt.Printf("String '%v' contains symbols.\n", whatwhat)
+		} else {
+			fmt.Printf("String '%v' did not contain symbols.\n", whatwhat)
+		}
+		fmt.Printf("Results whatwhat=%s\n", whatwhat)
+
+		lastinstance := strings.LastIndex(whatwhat, "}")
+		fmt.Printf("position of last instance = %d\n", lastinstance)
+
+		whatwhat = whatwhat[:lastinstance] + "}"
+
+		fmt.Printf("\n\nCleanwhatwhat =\n%s\n\n", whatwhat)
+
+		if "info" == strings.ToLower(viper.GetString("do")) {
+			fmt.Println("showing info")
+
+			var prettyJSON bytes.Buffer
+			error := json.Indent(&prettyJSON, []byte(whatwhat), "", " ")
+			if error != nil {
+				log.Println("JSON parse error: ", error)
+			}
+			log.Printf("\n\nPretty Print:\n------------\n%s\n------------\n", string(prettyJSON.Bytes()))
+		}
 	}
 }
 
@@ -185,4 +214,13 @@ func displayConfig() {
 	for _, k := range keys {
 		fmt.Println("CONFIG:", k, ":", allmysettings[k])
 	}
+}
+
+func hasSymbol(str string) bool {
+	for _, letter := range str {
+		if unicode.IsSymbol(letter) {
+			return true
+		}
+	}
+	return false
 }
