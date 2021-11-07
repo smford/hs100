@@ -18,7 +18,7 @@ import (
 )
 
 const applicationName string = "tplink-hs1x-cli"
-const applicationVersion string = "v0.6"
+const applicationVersion string = "v0.7"
 
 type SimpleResponse struct {
 	System struct {
@@ -75,6 +75,9 @@ var (
 		"getaction": `{"schedule":{"get_next_action":null}}`,
 		"getrules":  `{"schedule":{"get_rules":null}}`,
 		"getaway":   `{"anti_theft":{"get_rules":null}}`,
+		"reboot":    `{"system":{"reboot":{"delay":1}}}`,
+		"ledoff":    `{"system":{"set_led_off":{"off":1}}}`,
+		"ledon":     `{"system":{"set_led_off":{"off":0}}}`,
 	}
 
 	myDevice string
@@ -82,7 +85,7 @@ var (
 
 func init() {
 	flag.String("config", "config.yaml", "Configuration file: /path/to/file.yaml, default = ./config.yaml")
-	flag.String("do", "on", "on, off, info, wifiscan, getaction, getrules, getaway, status (default: \"on\")")
+	flag.String("do", "on", "on, off, info, ledon, ledoff, wifiscan, getaction, getrules, getaway, reboot, status (default: \"on\")")
 	flag.Bool("debug", false, "Display debugging information")
 	flag.Bool("list", false, "Display my devices")
 	flag.Bool("displayconfig", false, "Display configuration")
@@ -348,7 +351,7 @@ func displayHelp() {
       --debug               Display debug information
       --device [string]     Device to apply "do action" against
       --displayconfig       Display configuration
-      --do <action>         on, off, info, wifiscan, getaction, getrules, getaway, status (default: "on")
+      --do <action>         on, off, info, ledon, ledoff, wifiscan, getaction, getrules, getaway, reboot, status (default: "on")
       --help                Display help
       --list                List devices
       --version             Display version`
