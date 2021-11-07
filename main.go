@@ -18,7 +18,7 @@ import (
 )
 
 const applicationName string = "hs100-cli"
-const applicationVersion string = "v0.4"
+const applicationVersion string = "v0.5"
 
 type SystemInfo struct {
 	System struct {
@@ -68,15 +68,20 @@ var (
 		"getrules":  `{"schedule":{"get_rules":null}}`,
 		"getaway":   `{"anti_theft":{"get_rules":null}}`,
 	}
+
+	myDevice string
 )
 
 func init() {
 	flag.String("config", "config.yaml", "Configuration file: /path/to/file.yaml, default = ./config.yaml")
 	flag.String("do", "on", "on, off, info, wifiscan, getaction, getrules, getaway, status (default: \"on\")")
 	flag.Bool("debug", false, "Display debugging information")
+	flag.Bool("list", false, "Display my devices")
 	flag.Bool("displayconfig", false, "Display configuration")
 	flag.Bool("help", false, "Display help")
 	flag.Bool("version", false, "Display version information")
+	flag.Bool("all", false, "For all devices")
+	flag.String("device", "", "What device to query, (default: \"all\")")
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
 	err := viper.BindPFlags(pflag.CommandLine)
@@ -120,44 +125,98 @@ func init() {
 		os.Exit(0)
 	}
 
-}
+	if viper.GetBool("list") {
+		displayDevices()
+		os.Exit(0)
+	}
 
-func main() {
-	ip := "192.168.10.44"
-	jsonCmd := commandList[strings.ToLower(viper.GetString("do"))]
-	data := encrypt(jsonCmd)
-	reading, err := send(ip, data)
-	fmt.Println("send complete")
-	if err == nil {
+	if viper.GetBool("all") || (len(viper.GetString("device")) == 0) {
+		// if "--all" or if default is used, assume "all"
+		myDevice = "all"
+	} else {
 
-		// strip out junk at end of result in preparation for json parsing
-		decryptedresponse := decrypt(reading[4:])
-		lastinstance := strings.LastIndex(decryptedresponse, "}")
-		decryptedresponse = decryptedresponse[:lastinstance] + "}"
+		// check that the device exists
+		if _, ok := viper.GetStringMap("devices")[viper.GetString("device")]; ok {
+			myDevice = viper.GetString("device")
+		} else {
+			// device isn't found
 
-		var prettyJSON bytes.Buffer
-		error := json.Indent(&prettyJSON, []byte(decryptedresponse), "", " ")
-		if error != nil {
-			log.Println("JSON parse error: ", error)
-		}
+			// check if user has manually set "--device all"
+			if strings.EqualFold(viper.GetString("device"), "all") {
+				myDevice = "all"
 
-		// print the entire json response if info, getaction, getrules, getaway, wificscan
-		if strings.EqualFold(viper.GetString("do"), "info") || strings.EqualFold(viper.GetString("do"), "getaction") || strings.EqualFold(viper.GetString("do"), "getrules") || strings.EqualFold(viper.GetString("do"), "getaway") || strings.EqualFold(viper.GetString("do"), "wifiscan") {
-			fmt.Printf("%s\n", string(prettyJSON.Bytes()))
-		}
-
-		// print status of a device (on or off)
-		if strings.EqualFold(viper.GetString("do"), "status") {
-			res := SystemInfo{}
-			json.Unmarshal([]byte(decryptedresponse), &res)
-			switch res.System.GetSysinfo.RelayState {
-			case 0:
-				fmt.Println("OFF")
-			case 1:
-				fmt.Println("ON")
+			} else {
+				// exit out saying device not found
+				fmt.Printf("Device %s does not exist, exiting\n", viper.GetString("device"))
+				os.Exit(1)
 			}
 		}
 
+	}
+
+}
+
+func main() {
+
+	ips := make([]string, 0)
+
+	// if all devices,
+	if strings.EqualFold(myDevice, "all") {
+		fmt.Println("all devices")
+		for _, v := range viper.GetStringMap("devices") {
+			ips = append(ips, v.(string))
+		}
+
+	} else {
+		fmt.Printf("just device = %s\n", viper.GetString("device"))
+		fmt.Printf("length = %d\n", len(viper.GetString("device")))
+
+		ips = append(ips, viper.GetStringMap("devices")[viper.GetString("device")].(string))
+	}
+
+	fmt.Println("ips to scan")
+	for _, ip := range ips {
+		fmt.Println(ip)
+	}
+
+	for _, ip := range ips {
+
+		//ip := "192.168.10.44"
+		jsonCmd := commandList[strings.ToLower(viper.GetString("do"))]
+		data := encrypt(jsonCmd)
+		reading, err := send(ip, data)
+		fmt.Println("send complete")
+		if err == nil {
+
+			// strip out junk at end of result in preparation for json parsing
+			decryptedresponse := decrypt(reading[4:])
+			lastinstance := strings.LastIndex(decryptedresponse, "}")
+			decryptedresponse = decryptedresponse[:lastinstance] + "}"
+
+			var prettyJSON bytes.Buffer
+			error := json.Indent(&prettyJSON, []byte(decryptedresponse), "", " ")
+			if error != nil {
+				log.Println("JSON parse error: ", error)
+			}
+
+			// print the entire json response if info, getaction, getrules, getaway, wificscan
+			if strings.EqualFold(viper.GetString("do"), "info") || strings.EqualFold(viper.GetString("do"), "getaction") || strings.EqualFold(viper.GetString("do"), "getrules") || strings.EqualFold(viper.GetString("do"), "getaway") || strings.EqualFold(viper.GetString("do"), "wifiscan") {
+				fmt.Printf("%s\n", string(prettyJSON.Bytes()))
+			}
+
+			// print status of a device (on or off)
+			if strings.EqualFold(viper.GetString("do"), "status") {
+				res := SystemInfo{}
+				json.Unmarshal([]byte(decryptedresponse), &res)
+				switch res.System.GetSysinfo.RelayState {
+				case 0:
+					fmt.Println("OFF")
+				case 1:
+					fmt.Println("ON")
+				}
+			}
+
+		}
 	}
 }
 
@@ -250,5 +309,15 @@ func displayConfig() {
 	sort.Strings(keys)
 	for _, k := range keys {
 		fmt.Println("CONFIG:", k, ":", allmysettings[k])
+	}
+}
+
+func displayDevices() {
+	if viper.IsSet("devices") {
+		for k, v := range viper.GetStringMap("devices") {
+			fmt.Printf("%s     %s\n", k, v)
+		}
+	} else {
+		fmt.Println("no devices found")
 	}
 }
