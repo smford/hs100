@@ -20,6 +20,14 @@ import (
 const applicationName string = "hs100-cli"
 const applicationVersion string = "v0.6"
 
+type SimpleResponse struct {
+	System struct {
+		SetRelayState struct {
+			ErrCode int `json:"err_code"`
+		} `json:"set_relay_state"`
+	} `json:"system"`
+}
+
 type SystemInfo struct {
 	System struct {
 		GetSysinfo struct {
@@ -219,6 +227,23 @@ func main() {
 			error := json.Indent(&prettyJSON, []byte(decryptedresponse), "", " ")
 			if error != nil {
 				log.Println("JSON parse error: ", error)
+			}
+
+			// if standard on and off, show response
+			if strings.EqualFold(viper.GetString("do"), "on") || strings.EqualFold(viper.GetString("do"), "off") {
+				res := SimpleResponse{}
+				json.Unmarshal([]byte(decryptedresponse), &res)
+
+				if len(ips) > 1 {
+					fmt.Printf("%s: ", allDevices[ip])
+				}
+
+				switch res.System.SetRelayState.ErrCode {
+				case 0:
+					fmt.Println("OK")
+				default:
+					fmt.Printf("ERROR:%d\n", res.System.SetRelayState.ErrCode)
+				}
 			}
 
 			// print the entire json response if info, getaction, getrules, getaway, wificscan
