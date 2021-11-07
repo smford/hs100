@@ -15,7 +15,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"unicode"
 )
 
 const applicationName string = "hs100-cli"
@@ -36,7 +35,7 @@ var (
 
 func init() {
 	flag.String("config", "config.yaml", "Configuration file: /path/to/file.yaml, default = ./config.yaml")
-	flag.String("do", "on", "Some Description")
+	flag.String("do", "on", "on, off, info, wifiscan, getaction, getrules, getaway (default: \"on\")")
 	flag.Bool("debug", false, "Display debugging information")
 	flag.Bool("displayconfig", false, "Display configuration")
 	flag.Bool("help", false, "Display help")
@@ -93,33 +92,20 @@ func main() {
 	reading, err := send(ip, data)
 	fmt.Println("send complete")
 	if err == nil {
-		whatwhat := decrypt(reading[4:])
-		//fmt.Printf("Results=%s\n", decrypt(reading[4:]))
-		//whatwhat = whatwhat + "\n"
 
-		if hasSymbol(whatwhat) {
-			fmt.Printf("String '%v' contains symbols.\n", whatwhat)
-		} else {
-			fmt.Printf("String '%v' did not contain symbols.\n", whatwhat)
+		// strip out junk at end of result in preparation for json parsing
+		decryptedresponse := decrypt(reading[4:])
+		lastinstance := strings.LastIndex(decryptedresponse, "}")
+		decryptedresponse = decryptedresponse[:lastinstance] + "}"
+
+		var prettyJSON bytes.Buffer
+		error := json.Indent(&prettyJSON, []byte(decryptedresponse), "", " ")
+		if error != nil {
+			log.Println("JSON parse error: ", error)
 		}
-		fmt.Printf("Results whatwhat=%s\n", whatwhat)
 
-		lastinstance := strings.LastIndex(whatwhat, "}")
-		fmt.Printf("position of last instance = %d\n", lastinstance)
-
-		whatwhat = whatwhat[:lastinstance] + "}"
-
-		fmt.Printf("\n\nCleanwhatwhat =\n%s\n\n", whatwhat)
-
-		if "info" == strings.ToLower(viper.GetString("do")) {
-			fmt.Println("showing info")
-
-			var prettyJSON bytes.Buffer
-			error := json.Indent(&prettyJSON, []byte(whatwhat), "", " ")
-			if error != nil {
-				log.Println("JSON parse error: ", error)
-			}
-			log.Printf("\n\nPretty Print:\n------------\n%s\n------------\n", string(prettyJSON.Bytes()))
+		if strings.EqualFold(viper.GetString("do"), "info") || strings.EqualFold(viper.GetString("do"), "getaction") || strings.EqualFold(viper.GetString("do"), "getrules") || strings.EqualFold(viper.GetString("do"), "getaway") || strings.EqualFold(viper.GetString("do"), "wifiscan") {
+			fmt.Printf("%s\n", string(prettyJSON.Bytes()))
 		}
 	}
 }
@@ -214,13 +200,4 @@ func displayConfig() {
 	for _, k := range keys {
 		fmt.Println("CONFIG:", k, ":", allmysettings[k])
 	}
-}
-
-func hasSymbol(str string) bool {
-	for _, letter := range str {
-		if unicode.IsSymbol(letter) {
-			return true
-		}
-	}
-	return false
 }
