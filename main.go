@@ -18,7 +18,7 @@ import (
 )
 
 const applicationName string = "tplink-hs1x-cli"
-const applicationVersion string = "v1.0"
+const applicationVersion string = "v1.1"
 
 type SimpleResponse struct {
 	System struct {
@@ -101,19 +101,22 @@ type SystemInfo struct {
 var (
 	// further commands listed here: https://github.com/softScheck/tplink-smartplug/blob/master/tplink-smarthome-commands.txt
 	commandList = map[string]string{
-		"on":        `{"system":{"set_relay_state":{"state":1}}}`,
-		"off":       `{"system":{"set_relay_state":{"state":0}}}`,
-		"info":      `{"system":{"get_sysinfo":{}}}`,
-		"status":    `{"system":{"get_sysinfo":{}}}`, // same as info, just output is parsed differently
-		"wifiscan":  `{"netif":{"get_scaninfo":{"refresh":1}}}`,
-		"getaction": `{"schedule":{"get_next_action":null}}`,
-		"getrules":  `{"schedule":{"get_rules":null}}`,
-		"getaway":   `{"anti_theft":{"get_rules":null}}`,
-		"reboot":    `{"system":{"reboot":{"delay":1}}}`,
-		"ledoff":    `{"system":{"set_led_off":{"off":1}}}`,
-		"ledon":     `{"system":{"set_led_off":{"off":0}}}`,
-		"cloudinfo": `{"cnCloud":{"get_info":{}}}`,
-		"gettime":   `{"time":{"get_time":{}}}`,
+		"on":           `{"system":{"set_relay_state":{"state":1}}}`,
+		"off":          `{"system":{"set_relay_state":{"state":0}}}`,
+		"info":         `{"system":{"get_sysinfo":{}}}`,
+		"status":       `{"system":{"get_sysinfo":{}}}`, // same as info, just output is parsed differently
+		"wifiscan":     `{"netif":{"get_scaninfo":{"refresh":1}}}`,
+		"getaction":    `{"schedule":{"get_next_action":null}}`,
+		"getrules":     `{"schedule":{"get_rules":null}}`,
+		"getaway":      `{"anti_theft":{"get_rules":null}}`,
+		"reboot":       `{"system":{"reboot":{"delay":1}}}`,
+		"ledoff":       `{"system":{"set_led_off":{"off":1}}}`,
+		"ledon":        `{"system":{"set_led_off":{"off":0}}}`,
+		"cloudinfo":    `{"cnCloud":{"get_info":{}}}`,
+		"gettime":      `{"time":{"get_time":{}}}`,
+		"antitheft":    `{"anti_theft":{"get_rules":{}}}`,
+		"factoryreset": `{"system":{"reset":{"delay":1}}}`,
+		"energy":       `{"emeter":{"get_realtime":{}}}`,
 	}
 
 	myDevice string
