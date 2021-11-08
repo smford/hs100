@@ -18,7 +18,7 @@ import (
 )
 
 const applicationName string = "tplink-hs1x-cli"
-const applicationVersion string = "v1.3.2"
+const applicationVersion string = "v1.3.3"
 
 type SimpleResponse struct {
 	System struct {

@@ -1,4 +1,4 @@
-module tplink-hs1x-cli
+module github.com/smford/tplink-hs1x-cli
 
 go 1.17
 
