@@ -18,7 +18,7 @@ import (
 )
 
 const applicationName string = "tplink-hs1x-cli"
-const applicationVersion string = "v1.3"
+const applicationVersion string = "v1.3.1"
 
 type SimpleResponse struct {
 	System struct {
@@ -268,16 +268,17 @@ func main() {
 			var prettyJSON bytes.Buffer
 			error := json.Indent(&prettyJSON, []byte(decryptedresponse), "", " ")
 			if error != nil {
-				log.Println("JSON parse error: ", error)
+				log.Fatal(error)
 			}
 
 			// if standard on and off, show response
 			if strings.EqualFold(viper.GetString("do"), "on") || strings.EqualFold(viper.GetString("do"), "off") {
+				decryptedresponse = "some junk"
 				res := SimpleResponse{}
 				err = json.Unmarshal([]byte(decryptedresponse), &res)
 
 				if err != nil {
-					log.Fatal("Error decoding json %s\n", err)
+					log.Fatal(err)
 				}
 
 				if len(ips) > 1 {
@@ -298,7 +299,7 @@ func main() {
 				err = json.Unmarshal([]byte(decryptedresponse), &res)
 
 				if err != nil {
-					log.Fatal("Error decoding json %s\n", err)
+					log.Fatal(err)
 				}
 
 				if len(ips) > 1 {
@@ -319,7 +320,7 @@ func main() {
 				err = json.Unmarshal([]byte(decryptedresponse), &res)
 
 				if err != nil {
-					log.Fatal("Error decoding json %s\n", err)
+					log.Fatal(err)
 				}
 
 				switch res.Time.GetTime.ErrCode {
@@ -336,7 +337,7 @@ func main() {
 				err = json.Unmarshal([]byte(decryptedresponse), &res)
 
 				if err != nil {
-					log.Fatal("Error decoding json %s\n", err)
+					log.Fatal(err)
 				}
 
 				switch res.Netif.GetScaninfo.ErrCode {
@@ -361,7 +362,7 @@ func main() {
 				err = json.Unmarshal([]byte(decryptedresponse), &res)
 
 				if err != nil {
-					log.Fatal("Error decoding json %s\n", err)
+					log.Fatal(err)
 				}
 
 				if len(ips) > 1 {
