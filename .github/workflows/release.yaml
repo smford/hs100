@@ -2,15 +2,10 @@ name: Release
 
 on:
   push:
-    tags:
-      - "v*"
-
-#on:
-#  push:
-#    branches:
-#      - main
-#    paths-ignore:
-#      - "README.md"
+    branches:
+      - main
+    paths-ignore:
+      - "README.md"
 
 jobs:
   goreleaser:
