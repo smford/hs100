@@ -18,7 +18,7 @@ import (
 )
 
 const applicationName string = "tplink-hs1x-cli"
-const applicationVersion string = "v1.1"
+const applicationVersion string = "v1.2"
 
 type SimpleResponse struct {
 	System struct {
@@ -124,7 +124,7 @@ var (
 
 func init() {
 	flag.String("config", "config.yaml", "Configuration file: /path/to/file.yaml, default = ./config.yaml")
-	flag.String("do", "on", "on, off, info, cloudinfo, ledon, ledoff, wifiscan, getaction, gettime, getrules, getaway, reboot, status (default: \"on\")")
+	flag.String("do", "on", "on, off, status, info, cloudinfo, ledon, ledoff, wifiscan, getaction, gettime, getrules, getaway, reboot, antitheft, factoryreset, energy (default: \"on\")")
 	flag.Bool("debug", false, "Display debugging information")
 	flag.Bool("list", false, "Display my devices")
 	flag.Bool("displayconfig", false, "Display configuration")
@@ -435,7 +435,7 @@ func displayHelp() {
       --debug               Display debug information
       --device [string]     Device to apply "do action" against
       --displayconfig       Display configuration
-      --do <action>         on, off, info, cloudinfo, ledon, ledoff, wifiscan, getaction, gettime, getrules, getaway, reboot, status (default: "on")
+      --do <action>         on, off, status, info, cloudinfo, ledon, ledoff, wifiscan, getaction, gettime, getrules, getaway, reboot, antitheft, factoryreset, energy (default: "on")
       --help                Display help
       --list                List devices
       --version             Display version`
