@@ -18,7 +18,7 @@ import (
 )
 
 const applicationName string = "tplink-hs1x-cli"
-const applicationVersion string = "v1.3.3"
+const applicationVersion string = "v1.3.4"
 
 type SimpleResponse struct {
 	System struct {
@@ -273,7 +273,6 @@ func main() {
 
 			// if standard on and off, show response
 			if strings.EqualFold(viper.GetString("do"), "on") || strings.EqualFold(viper.GetString("do"), "off") {
-				decryptedresponse = "some junk"
 				res := SimpleResponse{}
 				err = json.Unmarshal([]byte(decryptedresponse), &res)
 
