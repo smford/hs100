@@ -18,7 +18,7 @@ import (
 )
 
 const applicationName string = "tplink-hs1x-cli"
-const applicationVersion string = "v0.9"
+const applicationVersion string = "v1.0"
 
 type SimpleResponse struct {
 	System struct {
@@ -48,6 +48,18 @@ type TimeResponse struct {
 			ErrCode int `json:"err_code"`
 		} `json:"get_time"`
 	} `json:"time"`
+}
+
+type WifiScanResponse struct {
+	Netif struct {
+		GetScaninfo struct {
+			ApList []struct {
+				Ssid    string `json:"ssid"`
+				KeyType int    `json:"key_type"`
+			} `json:"ap_list"`
+			ErrCode int `json:"err_code"`
+		} `json:"get_scaninfo"`
+	} `json:"netif"`
 }
 
 type SystemInfo struct {
@@ -295,10 +307,6 @@ func main() {
 				res := TimeResponse{}
 				json.Unmarshal([]byte(decryptedresponse), &res)
 
-				if len(ips) > 1 {
-					fmt.Printf("%s: ", allDevices[ip])
-				}
-
 				switch res.Time.GetTime.ErrCode {
 				case 0:
 					fmt.Printf("%04d-%02d-%02d %02d:%02d:%02d\n", res.Time.GetTime.Year, res.Time.GetTime.Month, res.Time.GetTime.Mday, res.Time.GetTime.Hour, res.Time.GetTime.Min, res.Time.GetTime.Sec)
@@ -307,8 +315,23 @@ func main() {
 				}
 			}
 
+			// show wifiscan response
+			if strings.EqualFold(viper.GetString("do"), "wifiscan") {
+				res := WifiScanResponse{}
+				json.Unmarshal([]byte(decryptedresponse), &res)
+
+				switch res.Netif.GetScaninfo.ErrCode {
+				case 0:
+					for _, bbbb := range res.Netif.GetScaninfo.ApList {
+						fmt.Printf("%s\n", bbbb.Ssid)
+					}
+				default:
+					fmt.Printf("ERROR:%d\n", res.Netif.GetScaninfo.ErrCode)
+				}
+			}
+
 			// print the entire json response if info, getaction, getrules, getaway, wificscan
-			if viper.GetBool("debug") || strings.EqualFold(viper.GetString("do"), "info") || strings.EqualFold(viper.GetString("do"), "cloudinfo") || strings.EqualFold(viper.GetString("do"), "getaction") || strings.EqualFold(viper.GetString("do"), "getrules") || strings.EqualFold(viper.GetString("do"), "getaway") || strings.EqualFold(viper.GetString("do"), "wifiscan") {
+			if viper.GetBool("debug") || strings.EqualFold(viper.GetString("do"), "info") || strings.EqualFold(viper.GetString("do"), "cloudinfo") || strings.EqualFold(viper.GetString("do"), "getaction") || strings.EqualFold(viper.GetString("do"), "getrules") || strings.EqualFold(viper.GetString("do"), "getaway") {
 
 				fmt.Printf("Response: %s\n", string(prettyJSON.Bytes()))
 			}
