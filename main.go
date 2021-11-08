@@ -18,7 +18,7 @@ import (
 )
 
 const applicationName string = "tplink-hs1x-cli"
-const applicationVersion string = "v1.3.1"
+const applicationVersion string = "v1.3.2"
 
 type SimpleResponse struct {
 	System struct {
@@ -405,7 +405,11 @@ func decrypt(ciphertext []byte) string {
 func encrypt(plaintext string) []byte {
 	n := len(plaintext)
 	buf := new(bytes.Buffer)
-	binary.Write(buf, binary.BigEndian, uint32(n))
+	err := binary.Write(buf, binary.BigEndian, uint32(n))
+
+	if err != nil {
+		log.Fatal(err)
+	}
 	ciphertext := []byte(buf.Bytes())
 
 	key := byte(0xAB)
