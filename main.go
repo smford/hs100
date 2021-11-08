@@ -18,7 +18,7 @@ import (
 )
 
 const applicationName string = "tplink-hs1x-cli"
-const applicationVersion string = "v1.2"
+const applicationVersion string = "v1.3"
 
 type SimpleResponse struct {
 	System struct {
@@ -274,7 +274,11 @@ func main() {
 			// if standard on and off, show response
 			if strings.EqualFold(viper.GetString("do"), "on") || strings.EqualFold(viper.GetString("do"), "off") {
 				res := SimpleResponse{}
-				json.Unmarshal([]byte(decryptedresponse), &res)
+				err = json.Unmarshal([]byte(decryptedresponse), &res)
+
+				if err != nil {
+					log.Fatal("Error decoding json %s\n", err)
+				}
 
 				if len(ips) > 1 {
 					fmt.Printf("%s: ", allDevices[ip])
@@ -291,7 +295,11 @@ func main() {
 			// if LED on and off, show response
 			if strings.EqualFold(viper.GetString("do"), "ledon") || strings.EqualFold(viper.GetString("do"), "ledoff") {
 				res := LedOnOffResponse{}
-				json.Unmarshal([]byte(decryptedresponse), &res)
+				err = json.Unmarshal([]byte(decryptedresponse), &res)
+
+				if err != nil {
+					log.Fatal("Error decoding json %s\n", err)
+				}
 
 				if len(ips) > 1 {
 					fmt.Printf("%s: ", allDevices[ip])
@@ -308,7 +316,11 @@ func main() {
 			// show gettime response
 			if strings.EqualFold(viper.GetString("do"), "gettime") {
 				res := TimeResponse{}
-				json.Unmarshal([]byte(decryptedresponse), &res)
+				err = json.Unmarshal([]byte(decryptedresponse), &res)
+
+				if err != nil {
+					log.Fatal("Error decoding json %s\n", err)
+				}
 
 				switch res.Time.GetTime.ErrCode {
 				case 0:
@@ -321,7 +333,11 @@ func main() {
 			// show wifiscan response
 			if strings.EqualFold(viper.GetString("do"), "wifiscan") {
 				res := WifiScanResponse{}
-				json.Unmarshal([]byte(decryptedresponse), &res)
+				err = json.Unmarshal([]byte(decryptedresponse), &res)
+
+				if err != nil {
+					log.Fatal("Error decoding json %s\n", err)
+				}
 
 				switch res.Netif.GetScaninfo.ErrCode {
 				case 0:
@@ -336,13 +352,17 @@ func main() {
 			// print the entire json response if info, getaction, getrules, getaway, wificscan
 			if viper.GetBool("debug") || strings.EqualFold(viper.GetString("do"), "info") || strings.EqualFold(viper.GetString("do"), "cloudinfo") || strings.EqualFold(viper.GetString("do"), "getaction") || strings.EqualFold(viper.GetString("do"), "getrules") || strings.EqualFold(viper.GetString("do"), "getaway") {
 
-				fmt.Printf("Response: %s\n", string(prettyJSON.Bytes()))
+				fmt.Printf("Response: %s\n", prettyJSON.String())
 			}
 
 			// print status of a device (on or off)
 			if strings.EqualFold(viper.GetString("do"), "status") {
 				res := SystemInfo{}
-				json.Unmarshal([]byte(decryptedresponse), &res)
+				err = json.Unmarshal([]byte(decryptedresponse), &res)
+
+				if err != nil {
+					log.Fatal("Error decoding json %s\n", err)
+				}
 
 				if len(ips) > 1 {
 					fmt.Printf("%s: ", allDevices[ip])
