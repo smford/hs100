@@ -18,7 +18,7 @@ import (
 )
 
 const applicationName string = "tplink-hs1x-cli"
-const applicationVersion string = "v0.8"
+const applicationVersion string = "v0.9"
 
 type SimpleResponse struct {
 	System struct {
@@ -34,6 +34,20 @@ type LedOnOffResponse struct {
 			ErrCode int `json:"err_code"`
 		} `json:"set_led_off"`
 	} `json:"system"`
+}
+
+type TimeResponse struct {
+	Time struct {
+		GetTime struct {
+			Year    int `json:"year"`
+			Month   int `json:"month"`
+			Mday    int `json:"mday"`
+			Hour    int `json:"hour"`
+			Min     int `json:"min"`
+			Sec     int `json:"sec"`
+			ErrCode int `json:"err_code"`
+		} `json:"get_time"`
+	} `json:"time"`
 }
 
 type SystemInfo struct {
@@ -87,6 +101,7 @@ var (
 		"ledoff":    `{"system":{"set_led_off":{"off":1}}}`,
 		"ledon":     `{"system":{"set_led_off":{"off":0}}}`,
 		"cloudinfo": `{"cnCloud":{"get_info":{}}}`,
+		"gettime":   `{"time":{"get_time":{}}}`,
 	}
 
 	myDevice string
@@ -94,7 +109,7 @@ var (
 
 func init() {
 	flag.String("config", "config.yaml", "Configuration file: /path/to/file.yaml, default = ./config.yaml")
-	flag.String("do", "on", "on, off, info, cloudinfo, ledon, ledoff, wifiscan, getaction, getrules, getaway, reboot, status (default: \"on\")")
+	flag.String("do", "on", "on, off, info, cloudinfo, ledon, ledoff, wifiscan, getaction, gettime, getrules, getaway, reboot, status (default: \"on\")")
 	flag.Bool("debug", false, "Display debugging information")
 	flag.Bool("list", false, "Display my devices")
 	flag.Bool("displayconfig", false, "Display configuration")
@@ -275,6 +290,23 @@ func main() {
 				}
 			}
 
+			// show gettime response
+			if strings.EqualFold(viper.GetString("do"), "gettime") {
+				res := TimeResponse{}
+				json.Unmarshal([]byte(decryptedresponse), &res)
+
+				if len(ips) > 1 {
+					fmt.Printf("%s: ", allDevices[ip])
+				}
+
+				switch res.Time.GetTime.ErrCode {
+				case 0:
+					fmt.Printf("%04d-%02d-%02d %02d:%02d:%02d\n", res.Time.GetTime.Year, res.Time.GetTime.Month, res.Time.GetTime.Mday, res.Time.GetTime.Hour, res.Time.GetTime.Min, res.Time.GetTime.Sec)
+				default:
+					fmt.Printf("ERROR:%d\n", res.Time.GetTime.ErrCode)
+				}
+			}
+
 			// print the entire json response if info, getaction, getrules, getaway, wificscan
 			if viper.GetBool("debug") || strings.EqualFold(viper.GetString("do"), "info") || strings.EqualFold(viper.GetString("do"), "cloudinfo") || strings.EqualFold(viper.GetString("do"), "getaction") || strings.EqualFold(viper.GetString("do"), "getrules") || strings.EqualFold(viper.GetString("do"), "getaway") || strings.EqualFold(viper.GetString("do"), "wifiscan") {
 
@@ -377,7 +409,7 @@ func displayHelp() {
       --debug               Display debug information
       --device [string]     Device to apply "do action" against
       --displayconfig       Display configuration
-      --do <action>         on, off, info, cloudinfo, ledon, ledoff, wifiscan, getaction, getrules, getaway, reboot, status (default: "on")
+      --do <action>         on, off, info, cloudinfo, ledon, ledoff, wifiscan, getaction, gettime, getrules, getaway, reboot, status (default: "on")
       --help                Display help
       --list                List devices
       --version             Display version`
