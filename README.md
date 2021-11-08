@@ -15,6 +15,21 @@ The TP-Link devices have port 9999/tcp open which allows properly constructed an
 
 ## Installation
 
+You can install a few ways:
+
+1. Download the binary for your OS from https://github.com/smford/tplink-hs1x-cli/releases
+1. Use `go install`
+   ```
+   # go install -v github.com/smford/tplink-hs1x-cli@latest
+   ```
+1. Clone the git repo and build
+   ```
+   git clone git@github.com:smford/tplink-hs1x-cli.git
+   cd tplink-hs1x-cli
+   go get
+   go build
+   ```
+
 ## Configuration
 
 Create a configuration file like the below.  It comprises of a human readable name and the IP address of the device.  You will use the human readable name when issuing commands from the tool.
