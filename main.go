@@ -18,13 +18,21 @@ import (
 )
 
 const applicationName string = "tplink-hs1x-cli"
-const applicationVersion string = "v0.7"
+const applicationVersion string = "v0.8"
 
 type SimpleResponse struct {
 	System struct {
 		SetRelayState struct {
 			ErrCode int `json:"err_code"`
 		} `json:"set_relay_state"`
+	} `json:"system"`
+}
+
+type LedOnOffResponse struct {
+	System struct {
+		SetLedOff struct {
+			ErrCode int `json:"err_code"`
+		} `json:"set_led_off"`
 	} `json:"system"`
 }
 
@@ -78,6 +86,7 @@ var (
 		"reboot":    `{"system":{"reboot":{"delay":1}}}`,
 		"ledoff":    `{"system":{"set_led_off":{"off":1}}}`,
 		"ledon":     `{"system":{"set_led_off":{"off":0}}}`,
+		"cloudinfo": `{"cnCloud":{"get_info":{}}}`,
 	}
 
 	myDevice string
@@ -85,7 +94,7 @@ var (
 
 func init() {
 	flag.String("config", "config.yaml", "Configuration file: /path/to/file.yaml, default = ./config.yaml")
-	flag.String("do", "on", "on, off, info, ledon, ledoff, wifiscan, getaction, getrules, getaway, reboot, status (default: \"on\")")
+	flag.String("do", "on", "on, off, info, cloudinfo, ledon, ledoff, wifiscan, getaction, getrules, getaway, reboot, status (default: \"on\")")
 	flag.Bool("debug", false, "Display debugging information")
 	flag.Bool("list", false, "Display my devices")
 	flag.Bool("displayconfig", false, "Display configuration")
@@ -249,8 +258,25 @@ func main() {
 				}
 			}
 
+			// if LED on and off, show response
+			if strings.EqualFold(viper.GetString("do"), "ledon") || strings.EqualFold(viper.GetString("do"), "ledoff") {
+				res := LedOnOffResponse{}
+				json.Unmarshal([]byte(decryptedresponse), &res)
+
+				if len(ips) > 1 {
+					fmt.Printf("%s: ", allDevices[ip])
+				}
+
+				switch res.System.SetLedOff.ErrCode {
+				case 0:
+					fmt.Println("OK")
+				default:
+					fmt.Printf("ERROR:%d\n", res.System.SetLedOff.ErrCode)
+				}
+			}
+
 			// print the entire json response if info, getaction, getrules, getaway, wificscan
-			if viper.GetBool("debug") || strings.EqualFold(viper.GetString("do"), "info") || strings.EqualFold(viper.GetString("do"), "getaction") || strings.EqualFold(viper.GetString("do"), "getrules") || strings.EqualFold(viper.GetString("do"), "getaway") || strings.EqualFold(viper.GetString("do"), "wifiscan") {
+			if viper.GetBool("debug") || strings.EqualFold(viper.GetString("do"), "info") || strings.EqualFold(viper.GetString("do"), "cloudinfo") || strings.EqualFold(viper.GetString("do"), "getaction") || strings.EqualFold(viper.GetString("do"), "getrules") || strings.EqualFold(viper.GetString("do"), "getaway") || strings.EqualFold(viper.GetString("do"), "wifiscan") {
 
 				fmt.Printf("Response: %s\n", string(prettyJSON.Bytes()))
 			}
@@ -351,7 +377,7 @@ func displayHelp() {
       --debug               Display debug information
       --device [string]     Device to apply "do action" against
       --displayconfig       Display configuration
-      --do <action>         on, off, info, ledon, ledoff, wifiscan, getaction, getrules, getaway, reboot, status (default: "on")
+      --do <action>         on, off, info, cloudinfo, ledon, ledoff, wifiscan, getaction, getrules, getaway, reboot, status (default: "on")
       --help                Display help
       --list                List devices
       --version             Display version`
