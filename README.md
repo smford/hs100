@@ -32,8 +32,7 @@ You can install a few ways:
 
 ## Configuration
 
-Create a configuration file like the below.  It comprises of a human readable name and the IP address of the device.  You will use the human readable name when issuing commands from the tool.
-
+Create a configuration file called `config.yaml` an example is available below:
 ```
 ---
 devices:
@@ -41,7 +40,45 @@ devices:
   large: 192.168.10.127
 ```
 
-## Usage
+The configuration file has a list of devices, a human readable name, and the IP address of the device.  The human readable name is used to issue commands against the devices.
+
+When tplink-hs1x-cli runs it checks the current directory for a `config.yaml`, if you wish to use a different configuration file use the command `--config /path/to/file.yaml`
+
+## Command Line Options
+```
+      --config [file]       Configuration file: /path/to/file.yaml (default: "./config.yaml")
+      --debug               Display debug information
+      --device [string]     Device to apply "do action" against
+      --displayconfig       Display configuration
+      --do <action>         on, off, status, info, cloudinfo, ledon, ledoff, wifiscan, getaction, gettime, getrules, getaway, reboot, antitheft, factoryreset, energy (default: "on")
+      --help                Display help
+      --list                List devices
+      --version             Display version
+```
+
+## Actions
+| Action | Details |
+|:--|:--|
+| antitheft | Display anti-theft configuration |
+| cloudinfo | Display TP-Link cloud information |
+| energy | Display enegery information |
+| factoryreset | Factory reset the device |
+| getaction | Display actions |
+| getaway | Display configurared away information |
+| getrules | Display configured rules |
+| gettime | Display configured time |
+| info | Display detailed information on a device |
+| ledon | Turn LED on (night mode) |
+| ledff | Turn LED off (night mode) |
+| off | Turn off |
+| on | Turn on |
+| reboot | Reboot device |
+| status | Display current status of a device |
+| wifiscan | Display wifi networks that the device can see |
+
+
+##  Example Usage
+
 
 
 ## Credit, High Fives & Useful Links
