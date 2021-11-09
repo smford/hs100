@@ -46,14 +46,16 @@ When tplink-hs1x-cli runs it checks the current directory for a `config.yaml`, i
 
 ## Command Line Options
 ```
-      --config [file]       Configuration file: /path/to/file.yaml (default: "./config.yaml")
-      --debug               Display debug information
-      --device [string]     Device to apply "do action" against
-      --displayconfig       Display configuration
-      --do <action>         on, off, status, info, cloudinfo, ledon, ledoff, wifiscan, getaction, gettime, getrules, getaway, reboot, antitheft, factoryreset, energy (default: "on")
-      --help                Display help
-      --list                List devices
-      --version             Display version
+--config [file]       Configuration file: /path/to/file.yaml (default: "./config.yaml")
+--debug               Display debug information
+--device [string]     Device to apply "do action" against
+--displayconfig       Display configuration
+--do <action>         on, off, status, info, cloudinfo, ledon, ledoff, wifiscan,
+                      getaction, gettime, getrules, getaway, reboot, antitheft,
+                      factoryreset, energy (default: "on")
+--help                Display help
+--list                List devices
+--version             Display version
 ```
 
 ## Actions
