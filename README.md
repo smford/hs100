@@ -13,6 +13,7 @@ The cloud method is slower and relies on internet access, sending commands direc
 
 The TP-Link devices have port 9999/tcp open which allows properly constructed and encrypted json to issue commands and get responses.  The encryption method is simple and well documented, further details are available in the Credit section.
 
+
 ## Installation
 
 You can install a few ways:
@@ -30,6 +31,7 @@ You can install a few ways:
    go build
    ```
 
+
 ## Configuration
 
 Create a configuration file called `config.yaml` an example is available below:
@@ -44,6 +46,7 @@ The configuration file has a list of devices, a human readable name, and the IP 
 
 When tplink-hs1x-cli runs it checks the current directory for a `config.yaml`, if you wish to use a different configuration file use the command `--config /path/to/file.yaml`
 
+
 ## Command Line Options
 ```
 --config [file]       Configuration file: /path/to/file.yaml (default: "./config.yaml")
@@ -57,6 +60,7 @@ When tplink-hs1x-cli runs it checks the current directory for a `config.yaml`, i
 --list                List devices
 --version             Display version
 ```
+
 
 ## Actions
 | Action | Details |
@@ -80,7 +84,12 @@ When tplink-hs1x-cli runs it checks the current directory for a `config.yaml`, i
 
 
 ##  Example Usage
-
+| Command | Details |
+|:--|:--|
+| `tplink-hs1x-cli --do on` | Turn all relays on |
+| `tplink-hs1x-cli --do off --device kitchen-lamp` | Turn kitchen-lamp off |
+| `tplink-hs1x-cli --config ~/myconfig.yaml --list` | Load config from ~/myconfig.yaml and list all devices |
+| `tplink-hs1x-cli --displayconfig` | Use the default config.yaml from current directory and display |
 
 
 ## Credit, High Fives & Useful Links
