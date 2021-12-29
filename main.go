@@ -18,7 +18,7 @@ import (
 )
 
 const applicationName string = "tplink-hs1x-cli"
-const applicationVersion string = "v1.3.4"
+const applicationVersion string = "v1.3.5"
 
 type SimpleResponse struct {
 	System struct {
@@ -101,22 +101,25 @@ type SystemInfo struct {
 var (
 	// further commands listed here: https://github.com/softScheck/tplink-smartplug/blob/master/tplink-smarthome-commands.txt
 	commandList = map[string]string{
-		"on":           `{"system":{"set_relay_state":{"state":1}}}`,
-		"off":          `{"system":{"set_relay_state":{"state":0}}}`,
-		"info":         `{"system":{"get_sysinfo":{}}}`,
-		"status":       `{"system":{"get_sysinfo":{}}}`, // same as info, just output is parsed differently
-		"wifiscan":     `{"netif":{"get_scaninfo":{"refresh":1}}}`,
-		"getaction":    `{"schedule":{"get_next_action":null}}`,
-		"getrules":     `{"schedule":{"get_rules":null}}`,
-		"getaway":      `{"anti_theft":{"get_rules":null}}`,
-		"reboot":       `{"system":{"reboot":{"delay":1}}}`,
-		"ledoff":       `{"system":{"set_led_off":{"off":1}}}`,
-		"ledon":        `{"system":{"set_led_off":{"off":0}}}`,
-		"cloudinfo":    `{"cnCloud":{"get_info":{}}}`,
-		"gettime":      `{"time":{"get_time":{}}}`,
-		"antitheft":    `{"anti_theft":{"get_rules":{}}}`,
-		"factoryreset": `{"system":{"reset":{"delay":1}}}`,
-		"energy":       `{"emeter":{"get_realtime":{}}}`,
+		"on":             `{"system":{"set_relay_state":{"state":1}}}`,
+		"off":            `{"system":{"set_relay_state":{"state":0}}}`,
+		"info":           `{"system":{"get_sysinfo":{}}}`,
+		"status":         `{"system":{"get_sysinfo":{}}}`, // same as info, just output is parsed differently
+		"wifiscan":       `{"netif":{"get_scaninfo":{"refresh":1}}}`,
+		"getaction":      `{"schedule":{"get_next_action":null}}`,
+		"getrules":       `{"schedule":{"get_rules":null}}`,
+		"getaway":        `{"anti_theft":{"get_rules":null}}`,
+		"reboot":         `{"system":{"reboot":{"delay":1}}}`,
+		"ledoff":         `{"system":{"set_led_off":{"off":1}}}`,
+		"ledon":          `{"system":{"set_led_off":{"off":0}}}`,
+		"cloudinfo":      `{"cnCloud":{"get_info":{}}}`,
+		"gettime":        `{"time":{"get_time":{}}}`,
+		"antitheft":      `{"anti_theft":{"get_rules":{}}}`,
+		"factoryreset":   `{"system":{"reset":{"delay":1}}}`,
+		"energy":         `{"emeter":{"get_realtime":{}}}`,
+		"energy-getgain": `{"emeter":{"get_vgain_igain":{}}}`,
+		"energy-day":     `{"emeter":{"get_daystat":{"month":12,"year":2021}}}`,
+		"energy-month":   `{"emeter":{"get_monthstat":{"year":2021}}}`,
 	}
 
 	myDevice string
@@ -124,7 +127,7 @@ var (
 
 func init() {
 	flag.String("config", "config.yaml", "Configuration file: /path/to/file.yaml, default = ./config.yaml")
-	flag.String("do", "on", "on, off, status, info, cloudinfo, ledon, ledoff, wifiscan, getaction, gettime, getrules, getaway, reboot, antitheft, factoryreset, energy (default: \"on\")")
+	flag.String("do", "on", "on, off, status, info, cloudinfo, ledon, ledoff, wifiscan, getaction, gettime, getrules, getaway, reboot, antitheft, factoryreset, energy, energy-getgain, energy-day, energy-month (default: \"on\")")
 	flag.Bool("debug", false, "Display debugging information")
 	flag.Bool("list", false, "Display my devices")
 	flag.Bool("displayconfig", false, "Display configuration")
@@ -349,8 +352,8 @@ func main() {
 				}
 			}
 
-			// print the entire json response if info, getaction, getrules, getaway, wificscan
-			if viper.GetBool("debug") || strings.EqualFold(viper.GetString("do"), "info") || strings.EqualFold(viper.GetString("do"), "cloudinfo") || strings.EqualFold(viper.GetString("do"), "getaction") || strings.EqualFold(viper.GetString("do"), "getrules") || strings.EqualFold(viper.GetString("do"), "getaway") {
+			// print the entire json response if info, cloudinfo, getaction, getrules, getaway, energy*
+			if viper.GetBool("debug") || strings.EqualFold(viper.GetString("do"), "info") || strings.EqualFold(viper.GetString("do"), "cloudinfo") || strings.EqualFold(viper.GetString("do"), "getaction") || strings.EqualFold(viper.GetString("do"), "getrules") || strings.EqualFold(viper.GetString("do"), "getaway") || strings.HasPrefix(viper.GetString("do"), "energy") {
 
 				fmt.Printf("Response: %s\n", prettyJSON.String())
 			}
@@ -459,7 +462,7 @@ func displayHelp() {
       --debug               Display debug information
       --device [string]     Device to apply "do action" against
       --displayconfig       Display configuration
-      --do <action>         on, off, status, info, cloudinfo, ledon, ledoff, wifiscan, getaction, gettime, getrules, getaway, reboot, antitheft, factoryreset, energy (default: "on")
+      --do <action>         on, off, status, info, cloudinfo, ledon, ledoff, wifiscan, getaction, gettime, getrules, getaway, reboot, antitheft, factoryreset, energy, energy-getgain, energy-day, energy-month (default: "on")
       --help                Display help
       --list                List devices
       --version             Display version`
