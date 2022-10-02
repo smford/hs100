@@ -7,18 +7,20 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 	"log"
 	"net"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+	"text/tabwriter"
+
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 )
 
 const applicationName string = "tplink-hs1x-cli"
-const applicationVersion string = "v1.3.4"
+const applicationVersion string = "v1.3.5"
 
 type SimpleResponse struct {
 	System struct {
@@ -481,9 +483,27 @@ func displayConfig() {
 
 func displayDevices() {
 	if viper.IsSet("devices") {
-		for k, v := range viper.GetStringMap("devices") {
-			fmt.Printf("%s     %s\n", k, v)
+		// do sorting
+		var keys []string
+		for k := range viper.GetStringMap("devices") {
+			keys = append(keys, k)
 		}
+		sort.Strings(keys)
+
+		// print the list
+		w := new(tabwriter.Writer)
+
+		const padding = 1
+		w.Init(os.Stdout, 0, 2, padding, ' ', 0)
+		defer w.Flush()
+
+		fmt.Fprintf(w, "%s\t%s\n", "Name", "IP")
+		fmt.Fprintf(w, "%s\t%s\n", "----", "--")
+
+		for _, k := range keys {
+			fmt.Fprintf(w, "%s\t%s\n", k, viper.GetStringMap("devices")[k].(string))
+		}
+
 	} else {
 		fmt.Println("no devices found")
 	}
