@@ -20,7 +20,7 @@ import (
 )
 
 const applicationName string = "tplink-hs1x-cli"
-const applicationVersion string = "v1.3.5"
+const applicationVersion string = "v1.3.6"
 
 type SimpleResponse struct {
 	System struct {
@@ -469,6 +469,7 @@ func displayHelp() {
 	fmt.Println(message)
 }
 
+// display configuration
 func displayConfig() {
 	allmysettings := viper.AllSettings()
 	var keys []string
@@ -476,8 +477,18 @@ func displayConfig() {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
+
+	w := new(tabwriter.Writer)
+
+	const padding = 1
+	w.Init(os.Stdout, 0, 2, padding, ' ', 0)
+	defer w.Flush()
+
+	fmt.Fprintf(w, "%s\t%s\n", "Config", "Setting")
+	fmt.Fprintf(w, "%s\t%s\n", "------", "-------")
+
 	for _, k := range keys {
-		fmt.Println("CONFIG:", k, ":", allmysettings[k])
+		fmt.Fprintf(w, "%s\t%v\n", k, allmysettings[k])
 	}
 }
 
