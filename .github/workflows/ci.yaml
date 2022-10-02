@@ -50,6 +50,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2
+        uses: golangci/golangci-lint-action@master
         with:
-          version: v1.29
+          version: v1.39.0
