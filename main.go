@@ -20,7 +20,7 @@ import (
 )
 
 const applicationName string = "tplink-hs1x-cli"
-const applicationVersion string = "v1.3.6"
+const applicationVersion string = "v1.4"
 
 type SimpleResponse struct {
 	System struct {
@@ -99,6 +99,18 @@ type SystemInfo struct {
 		} `json:"get_sysinfo"`
 	} `json:"system"`
 }
+
+// type EnergyResponse struct {
+//	Emeter struct {
+//		GetRealtime struct {
+//			VoltageMv int `json:"voltage_mv"`
+//			CurrentMa int `json:"current_ma"`
+//			PowerMw   int `json:"power_mw"`
+//			TotalWh   int `json:"total_wh"`
+//			ErrCode   int `json:"err_code"`
+//		} `json:"get_realtime"`
+//	} `json:"emeter"`
+//}
 
 var (
 	// further commands listed here: https://github.com/softScheck/tplink-smartplug/blob/master/tplink-smarthome-commands.txt
@@ -351,10 +363,10 @@ func main() {
 				}
 			}
 
-			// print the entire json response if info, getaction, getrules, getaway, wificscan
-			if viper.GetBool("debug") || strings.EqualFold(viper.GetString("do"), "info") || strings.EqualFold(viper.GetString("do"), "cloudinfo") || strings.EqualFold(viper.GetString("do"), "getaction") || strings.EqualFold(viper.GetString("do"), "getrules") || strings.EqualFold(viper.GetString("do"), "getaway") {
+			// print the entire json response if info, getaction, getrules, getaway, wificscan, energy
+			if viper.GetBool("debug") || strings.EqualFold(viper.GetString("do"), "info") || strings.EqualFold(viper.GetString("do"), "cloudinfo") || strings.EqualFold(viper.GetString("do"), "getaction") || strings.EqualFold(viper.GetString("do"), "getrules") || strings.EqualFold(viper.GetString("do"), "getaway") || strings.EqualFold(viper.GetString("do"), "energy") {
 
-				fmt.Printf("Response: %s\n", prettyJSON.String())
+				fmt.Printf("%s\n", prettyJSON.String())
 			}
 
 			// print status of a device (on or off)
