@@ -7,9 +7,9 @@ Sometimes it is just easier to use a simple cli tool to turn the lights on and o
 
 ## Background
 
-There are two ways to control TP-Link HS1x0 devices, firstly by the TP-Links cloud and secondly by sending command directly to the devices.
+There are two ways to control TP-Link HS1x0 devices, firstly by TP-Links cloud infrastructure, or alternatively by sending commands directly to the devices.
 
-The cloud method is slower and relies on internet access, sending commands directly is quicker, but insecure.
+The cloud method is slower and relies on internet access, sending commands directly to each device is quicker and the method this tool uses.
 
 The TP-Link devices have port 9999/tcp open which allows properly constructed and encrypted json to issue commands and get responses.  The encryption method is simple and well documented, further details are available in the Credit section.
 
@@ -67,7 +67,7 @@ When tplink-hs1x-cli runs it checks the current directory for a `config.yaml`, i
 |:--|:--|
 | antitheft | Display anti-theft configuration |
 | cloudinfo | Display TP-Link cloud information |
-| energy | Display enegery information |
+| energy | Display energy information |
 | factoryreset | Factory reset the device |
 | getaction | Display actions |
 | getaway | Display configurared away information |
@@ -75,7 +75,7 @@ When tplink-hs1x-cli runs it checks the current directory for a `config.yaml`, i
 | gettime | Display configured time |
 | info | Display detailed information on a device |
 | ledon | Turn LED on (night mode) |
-| ledff | Turn LED off (night mode) |
+| ledoff | Turn LED off (night mode) |
 | off | Turn off |
 | on | Turn on |
 | reboot | Reboot device |
