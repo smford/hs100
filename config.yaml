@@ -2,3 +2,6 @@
 devices:
   small: 192.168.10.44
   large: 192.168.10.127
+  cnclights: 192.168.10.228
+  cncmain: 192.168.10.229
+  lightbar: 192.168.10.234
